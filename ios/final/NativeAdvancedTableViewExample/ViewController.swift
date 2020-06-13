@@ -13,7 +13,7 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 //
-import Firebase
+import GoogleMobileAds
 import UIKit
 
 class ViewController: UIViewController, GADUnifiedNativeAdLoaderDelegate {
@@ -27,10 +27,10 @@ class ViewController: UIViewController, GADUnifiedNativeAdLoaderDelegate {
   let adUnitID = "ca-app-pub-3940256099942544/8407707713"
 
   /// The number of native ads to load (must be less than 5).
-  let numAdsToLoad = 5
+  let numAdsToLoad = 1
 
   /// The native ads.
-  var nativeAds = [GADUnifiedNativeAd]()
+  var nativeAds = [AdData]()
 
   /// The ad loader that loads the native ads.
   var adLoader: GADAdLoader!
@@ -49,6 +49,8 @@ class ViewController: UIViewController, GADUnifiedNativeAdLoaderDelegate {
     let options = GADMultipleAdsAdLoaderOptions()
     options.numberOfAds = numAdsToLoad
 
+    GADMobileAds.sharedInstance().requestConfiguration.testDeviceIdentifiers = [ "545d15c9b6e1497971f6157e701d5c3d" ];
+
     // Prepare the ad loader and start loading ads.
     adLoader = GADAdLoader(adUnitID: adUnitID,
                            rootViewController: self,
@@ -61,6 +63,7 @@ class ViewController: UIViewController, GADUnifiedNativeAdLoaderDelegate {
   @IBAction func showMenu(_ sender: Any) {
     let tableVC = storyboard?.instantiateViewController(withIdentifier: "TableViewController")
         as! TableViewController
+    tableVC.modalPresentationStyle = .fullScreen
     tableVC.tableViewItems = tableViewItems
     self.present(tableVC, animated: true, completion: nil)
   }
@@ -131,7 +134,7 @@ class ViewController: UIViewController, GADUnifiedNativeAdLoaderDelegate {
     print("Received native ad: \(nativeAd)")
 
     // Add the native ad to the list of native ads.
-    nativeAds.append(nativeAd)
+    nativeAds.append(AdData(adMobData: nativeAd))
   }
   
   func adLoaderDidFinishLoading(_ adLoader: GADAdLoader) {

@@ -14,7 +14,7 @@
 //  limitations under the License.
 //
 
-import Firebase
+import GoogleMobileAds
 import UIKit
 
 class TableViewController: UITableViewController {
@@ -30,8 +30,8 @@ class TableViewController: UITableViewController {
     super.viewDidLoad()
     tableView.register(UINib(nibName: "MenuItem", bundle: nil),
         forCellReuseIdentifier: "MenuItemViewCell")
-    tableView.register(UINib(nibName: "UnifiedNativeAdCell", bundle: nil),
-        forCellReuseIdentifier: "UnifiedNativeAdCell")
+    tableView.register(UINib(nibName: "AdCell", bundle: nil),
+        forCellReuseIdentifier: "AdCell")
   }
 
   // MARK: - UITableView delegate methods
@@ -65,40 +65,16 @@ class TableViewController: UITableViewController {
 
       return reusableMenuItemCell
     } else {
-      let nativeAd = tableViewItems[indexPath.row] as! GADUnifiedNativeAd
-      /// Set the native ad's rootViewController to the current view controller.
-      nativeAd.rootViewController = self
+        let cell = tableView.dequeueReusableCell(
+            withIdentifier: "AdCell", for: indexPath) as! AdCell
 
-      let nativeAdCell = tableView.dequeueReusableCell(
-          withIdentifier: "UnifiedNativeAdCell", for: indexPath)
-
-      // Get the ad view from the Cell. The view hierarchy for this cell is defined in
-      // UnifiedNativeAdCell.xib.
-      let adView : GADUnifiedNativeAdView = nativeAdCell.contentView.subviews
-        .first as! GADUnifiedNativeAdView
-
-      // Associate the ad view with the ad object.
-      // This is required to make the ad clickable.
-      adView.nativeAd = nativeAd
-
-      // Populate the ad view with the ad assets.
-      (adView.headlineView as! UILabel).text = nativeAd.headline
-      (adView.priceView as! UILabel).text = nativeAd.price
-      if let starRating = nativeAd.starRating {
-        (adView.starRatingView as! UILabel).text =
-            starRating.description + "\u{2605}"
-      } else {
-        (adView.starRatingView as! UILabel).text = nil
-      }
-      (adView.bodyView as! UILabel).text = nativeAd.body
-      (adView.advertiserView as! UILabel).text = nativeAd.advertiser
-      // The SDK automatically turns off user interaction for assets that are part of the ad, but
-      // it is still good to be explicit.
-      (adView.callToActionView as! UIButton).isUserInteractionEnabled = false
-      (adView.callToActionView as! UIButton).setTitle(
-          nativeAd.callToAction, for: UIControlState.normal)
-
-      return nativeAdCell
+        let adData = tableViewItems[indexPath.row] as! AdData
+        cell.adView.nativeAd = adData.originalAdData
+        cell.title = adData.title
+        cell.body = adData.detailText
+        cell.ctaLabel.isUserInteractionEnabled = false
+        cell.cta = adData.ctaText
+        return cell
     } 
   }
 
