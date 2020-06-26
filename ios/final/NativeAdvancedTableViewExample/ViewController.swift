@@ -15,6 +15,7 @@
 //
 import GoogleMobileAds
 import UIKit
+import AdSupport
 
 class ViewController: UIViewController, GADUnifiedNativeAdLoaderDelegate {
 
@@ -27,7 +28,7 @@ class ViewController: UIViewController, GADUnifiedNativeAdLoaderDelegate {
   let adUnitID = "ca-app-pub-3940256099942544/8407707713"
 
   /// The number of native ads to load (must be less than 5).
-  let numAdsToLoad = 1
+  let numAdsToLoad = 4
 
   /// The native ads.
   var nativeAds = [AdData]()
@@ -46,31 +47,39 @@ class ViewController: UIViewController, GADUnifiedNativeAdLoaderDelegate {
 
     // Load the menu items.
     addMenuItems()
-    let options = GADMultipleAdsAdLoaderOptions()
-    options.numberOfAds = numAdsToLoad
+    fetchAds()
 
-    GADMobileAds.sharedInstance().requestConfiguration.testDeviceIdentifiers = [ "545d15c9b6e1497971f6157e701d5c3d" ];
-
-    // Prepare the ad loader and start loading ads.
-    adLoader = GADAdLoader(adUnitID: adUnitID,
-                           rootViewController: self,
-                           adTypes: [.unifiedNative],
-                           options: [options])
-    adLoader.delegate = self
-    adLoader.load(GADRequest())
+    let myIDFA = ASIdentifierManager().advertisingIdentifier
+    print("myIDFA :\(myIDFA)")
   }
 
+    func fetchAds() {
+        GADMobileAds.sharedInstance().requestConfiguration.testDeviceIdentifiers = [ "545d15c9b6e1497971f6157e701d5c3d", "" ];
+
+        // Prepare the ad loader and start loading ads.
+        adLoader = GADAdLoader(adUnitID: adUnitID,
+                               rootViewController: self,
+                               adTypes: [.unifiedNative],
+                               options: [])
+        adLoader.delegate = self
+        adLoader.load(GADRequest())
+    }
+
   @IBAction func showMenu(_ sender: Any) {
+    adLoader.load(GADRequest())
     let tableVC = storyboard?.instantiateViewController(withIdentifier: "TableViewController")
         as! TableViewController
     tableVC.modalPresentationStyle = .fullScreen
     tableVC.tableViewItems = tableViewItems
+    tableVC.adItems = nativeAds
     self.present(tableVC, animated: true, completion: nil)
   }
 
   func enableMenuButton() {
-    spinnerView.stopAnimating()
-    showMenuButton.isEnabled = true
+    if nativeAds.count > numAdsToLoad {
+        spinnerView.stopAnimating()
+        showMenuButton.isEnabled = true
+    }
   }
 
   /// Adds MenuItems to the tableViewItems list.
@@ -108,19 +117,10 @@ class ViewController: UIViewController, GADUnifiedNativeAdLoaderDelegate {
 
   /// Add native ads to the tableViewItems list.
   func addNativeAds() {
-    if nativeAds.count <= 0 {
-      return
-    }
-
-    let adInterval = (tableViewItems.count / nativeAds.count) + 1
-    var index = 0
-    for nativeAd in nativeAds {
-      if index < tableViewItems.count {
-        tableViewItems.insert(nativeAd, at: index)
-        index += adInterval
-      } else {
-        break
-      }
+    if nativeAds.count <= numAdsToLoad {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            self.adLoader.load(GADRequest())
+        }
     }
   }
 
@@ -136,7 +136,7 @@ class ViewController: UIViewController, GADUnifiedNativeAdLoaderDelegate {
     // Add the native ad to the list of native ads.
     nativeAds.append(AdData(adMobData: nativeAd))
   }
-  
+
   func adLoaderDidFinishLoading(_ adLoader: GADAdLoader) {
     addNativeAds()
     enableMenuButton()

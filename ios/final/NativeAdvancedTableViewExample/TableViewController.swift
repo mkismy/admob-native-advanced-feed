@@ -19,63 +19,79 @@ import UIKit
 
 class TableViewController: UITableViewController {
 
-  // MARK: - Properties
+    // MARK: - Properties
 
-  /// The table view items.
-  var tableViewItems = [AnyObject]()
+    /// The table view items.
+    var tableViewItems = [AnyObject]()
+    var adItems = [AdData]()
 
-  // MARK: - UIViewController methods
+    // MARK: - UIViewController methods
 
-  override func viewDidLoad() {
-    super.viewDidLoad()
-    tableView.register(UINib(nibName: "MenuItem", bundle: nil),
-        forCellReuseIdentifier: "MenuItemViewCell")
-    tableView.register(UINib(nibName: "AdCell", bundle: nil),
-        forCellReuseIdentifier: "AdCell")
-  }
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        tableView.register(UINib(nibName: "MenuItem", bundle: nil), forCellReuseIdentifier: "MenuItemViewCell")
+        tableView.register(UINib(nibName: "AdCell", bundle: nil), forCellReuseIdentifier: "AdCell")
+    }
 
-  // MARK: - UITableView delegate methods
+    // MARK: - UITableView delegate methods
 
-  override func numberOfSections(in tableView: UITableView) -> Int {
-    return 1
-  }
+    override func numberOfSections(in tableView: UITableView) -> Int {
+        return 1
+    }
 
-  override func tableView(_ tableView: UITableView,
-      heightForRowAt indexPath: IndexPath) -> CGFloat {
-    return 120
-  }
+    override func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
+        return 120
+    }
 
-  override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-    return tableViewItems.count
-  }
+    override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return tableViewItems.count
+    }
 
-  override func tableView(_ tableView: UITableView,
-      cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    func getAdData() -> AdData? {
+        print("ADItemCount: ", adItems.count)
+        if adItems.count == 0 {
+            return nil
+        }
+        let adData = adItems[0]
+        adItems.removeFirst()
 
-    if let menuItem = tableViewItems[indexPath.row] as? MenuItem {
+        return adData
+    }
 
-      let reusableMenuItemCell = tableView.dequeueReusableCell(withIdentifier: "MenuItemViewCell",
+    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+
+        if indexPath.row == 1 {
+            let cell = tableView.dequeueReusableCell(
+                withIdentifier: "AdCell", for: indexPath) as! AdCell
+
+            cell.adView.nativeAd = nil
+            cell.title = nil
+            cell.body = nil
+            cell.cta = nil
+
+            guard let adData = getAdData() else {
+                return cell
+            }
+            adData.originalAdData?.rootViewController = self
+            cell.adView.nativeAd = adData.originalAdData
+            cell.title = adData.title
+            cell.body = adData.detailText
+            cell.ctaLabel.isUserInteractionEnabled = false
+            cell.cta = adData.ctaText
+            return cell
+        }
+
+        let menuItem = tableViewItems[indexPath.row] as! MenuItem
+
+        let reusableMenuItemCell = tableView.dequeueReusableCell(withIdentifier: "MenuItemViewCell",
           for: indexPath) as! MenuItemViewCell
 
-      reusableMenuItemCell.nameLabel.text = menuItem.name
-      reusableMenuItemCell.descriptionLabel.text = menuItem.description
-      reusableMenuItemCell.priceLabel.text = menuItem.price
-      reusableMenuItemCell.categoryLabel.text = menuItem.category
-      reusableMenuItemCell.photoView.image = menuItem.photo
+        reusableMenuItemCell.nameLabel.text = menuItem.name
+        reusableMenuItemCell.descriptionLabel.text = menuItem.description
+        reusableMenuItemCell.priceLabel.text = menuItem.price
+        reusableMenuItemCell.categoryLabel.text = menuItem.category
+        reusableMenuItemCell.photoView.image = menuItem.photo
 
-      return reusableMenuItemCell
-    } else {
-        let cell = tableView.dequeueReusableCell(
-            withIdentifier: "AdCell", for: indexPath) as! AdCell
-
-        let adData = tableViewItems[indexPath.row] as! AdData
-        cell.adView.nativeAd = adData.originalAdData
-        cell.title = adData.title
-        cell.body = adData.detailText
-        cell.ctaLabel.isUserInteractionEnabled = false
-        cell.cta = adData.ctaText
-        return cell
-    } 
-  }
-
+        return reusableMenuItemCell
+    }
 }
